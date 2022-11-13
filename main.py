@@ -1,4 +1,3 @@
-#%%
 from torch import nn
 import torch
 import numpy as np
@@ -7,7 +6,7 @@ from matplotlib.colors import ListedColormap
 from torch import nn,optim
 from torch.utils.data import Dataset, DataLoader
 
-#print("PyTorch version: ", torch.__version__)
+print("PyTorch version: ", torch.__version__)
 
 a = 2*np.random.rand()-1
 b = 2*np.random.rand()-1
@@ -50,23 +49,23 @@ class Data(Dataset):
     def __len__(self):
         return self.len
 
-class LR(nn.Module):
+class Neuron(nn.Module):
     
     # Constructor
-    def __init__(self, in1, out1, out2):
-        super(LR, self).__init__()
-        self.linear1 = nn.Linear(in1, out1)
-        self.linear2 = nn.Linear(out1, out2)
-        self.tanh = nn.Tanh()
-        self.relu = nn.ReLU()
+    def __init__(self, inpu, h1, h2, h3, output):
+        super(Neuron, self).__init__()
+        self.Sequence = nn.Sequential(nn.Linear(inpu, h1), 
+                        nn.Tanh(), 
+                        nn.Linear(h1, h2),
+                        nn.Tanh(), 
+                        nn.Linear(h2, h3),
+                        nn.Tanh(), 
+                        nn.Linear(h3, output),
+                        nn.Sigmoid())
         
     # Prediction
     def forward(self, x):
-        x = torch.sigmoid(self.linear1(x))
-        x = torch.sigmoid(self.relu(x))
-        x = torch.sigmoid(self.linear2(x))
-        x = torch.sigmoid(self.tanh(x))
-        return x
+        return self.Sequence(x)
 
 def function_train(epochs, batches, model, costFunc, optimizer):
     LOSS = []
@@ -104,9 +103,10 @@ def plot_decision_regions_2class(model,data_set):
 train_data = Data(a, b)
 val_data = Data(a, b, train = False)
 print(train_data.x.shape, " ", train_data.y.shape)
+
 # Build the model
 # 2 input, 4 hidden layer, bool class
-model = LR(2, 3, 1)
+model = Neuron(2, 3, 3, 3, 1)
 
 #Choose otpimizer
 optimizer = optim.SGD(model.parameters(), lr=0.1)
@@ -121,9 +121,3 @@ function_train(900, batches, model, costFunc, optimizer)
 
 
 plot_decision_regions_2class(model, train_data)
-exit()
-
-
-
-
-# %%
