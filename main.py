@@ -5,8 +5,13 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from torch import nn,optim
 from torch.utils.data import Dataset, DataLoader
+from collections import OrderedDict
+import random
+
 
 print("PyTorch version: ", torch.__version__)
+
+random.seed(1)
 
 a = 2*np.random.rand()-1
 b = 2*np.random.rand()-1
@@ -52,16 +57,9 @@ class Data(Dataset):
 class Neuron(nn.Module):
     
     # Constructor
-    def __init__(self, inpu, h1, h2, h3, output):
+    def __init__(self, sequence):
         super(Neuron, self).__init__()
-        self.Sequence = nn.Sequential(nn.Linear(inpu, h1), 
-                        nn.Tanh(), 
-                        nn.Linear(h1, h2),
-                        nn.Tanh(), 
-                        nn.Linear(h2, h3),
-                        nn.Tanh(), 
-                        nn.Linear(h3, output),
-                        nn.Sigmoid())
+        self.Sequence = nn.Sequential(sequence)
         
     # Prediction
     def forward(self, x):
@@ -78,7 +76,7 @@ def function_train(epochs, batches, model, costFunc, optimizer):
             loss.backward()
             optimizer.step()
 
-def plot_decision_regions_2class(model,data_set):
+def plot_decision_regions_2class(model,data_set, title=None, save=None):
     cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#00AAFF'])
     cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#00AAFF'])
     X = data_set.x.numpy()
@@ -93,8 +91,10 @@ def plot_decision_regions_2class(model,data_set):
     plt.pcolormesh(xx, yy, yhat, cmap=cmap_light)
     plt.plot(X[y[:, 0] == 0, 0], X[y[:, 0] == 0, 1], 'o', label='y=0')
     plt.plot(X[y[:, 0] == 1, 0], X[y[:, 0] == 1, 1], 'ro', label='y=1')
-    plt.title("decision region")
+    plt.title(title)
     plt.legend()
+    if save:
+        plt.savefig("res/"+ save)
     plt.show()
 
 #def crossEntropy(x):
@@ -104,20 +104,56 @@ train_data = Data(a, b)
 val_data = Data(a, b, train = False)
 print(train_data.x.shape, " ", train_data.y.shape)
 
-# Build the model
-# 2 input, 4 hidden layer, bool class
-model = Neuron(2, 3, 3, 3, 1)
-
-#Choose otpimizer
-optimizer = optim.SGD(model.parameters(), lr=0.1)
-
 #Choose cost function
 costFunc = nn.BCELoss()
 
 #Divide datas in batches
 batches = DataLoader(dataset=train_data, batch_size=1)
 
-function_train(900, batches, model, costFunc, optimizer)
+for i in range(9, 11, 2):
+    # Build the model
+    seq1 = OrderedDict()
+    seq1['linear1'] = nn.Linear(2, i)
+    seq1['Tanh1'] = nn.Tanh()
+    seq1['linear2'] = nn.Linear(i, 1)
+    seq1['Sigmoid'] = nn.Sigmoid()
+
+    seq2 = OrderedDict()
+    seq2['linear1'] = nn.Linear(2, i)
+    seq2['Tanh1'] = nn.Tanh()
+    seq2['linear2'] = nn.Linear(i, i)
+    seq2['Tanh2'] = nn.Tanh()
+    seq2['linear3'] = nn.Linear(i, 1)
+    seq2['Sigmoid'] = nn.Sigmoid()
+
+    seq3 = OrderedDict()
+    seq3['linear1'] = nn.Linear(2, i)
+    seq3['Tanh1'] = nn.Tanh()
+    seq3['linear2'] = nn.Linear(i, i)
+    seq3['Tanh2'] = nn.Tanh()
+    seq3['linear3'] = nn.Linear(i, i)
+    seq3['Tanh3'] = nn.Tanh()
+    seq3['linear4'] = nn.Linear(i, 1)
+    seq3['Sigmoid'] = nn.Sigmoid()
 
 
-plot_decision_regions_2class(model, train_data)
+    model = Neuron(seq1)
+    #Choose otpimizer
+    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    function_train(900, batches, model, costFunc, optimizer)
+    strSave = "fig"+str(i)+"_seq1.png"
+    plot_decision_regions_2class(model, train_data, title=(seq1.keys()), save=strSave)
+
+    model = Neuron(seq2)
+    #Choose otpimizer
+    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    function_train(900, batches, model, costFunc, optimizer)
+    strSave = "fig"+str(i)+"_seq2.png"
+    plot_decision_regions_2class(model, train_data, title=(seq2.keys()), save=strSave)
+
+    model = Neuron(seq3)
+    #Choose otpimizer
+    optimizer = optim.SGD(model.parameters(), lr=0.1)
+    function_train(900, batches, model, costFunc, optimizer)
+    strSave = "fig"+str(i)+"_seq3.png"
+    plot_decision_regions_2class(model, train_data, title=(seq3.keys()), save=strSave)
